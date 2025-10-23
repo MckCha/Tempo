@@ -35,12 +35,12 @@ CREATE TABLE travel.itinerary (
     start_date DATE,
     end_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
 CREATE TABLE travel.itinerary_days (
     id SERIAL PRIMARY KEY,
     itinerary_id INT REFERENCES travel.itinerary(id),
-    day_number INT,
-)
+    day_number INT
+);
 CREATE TABLE travel.activities (
     id SERIAL PRIMARY KEY,
     itinerary_day_id INT REFERENCES travel.itinerary_days(id),
