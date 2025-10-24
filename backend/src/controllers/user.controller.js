@@ -1,4 +1,5 @@
 import { pool } from "../config/db.js";
+import argon2 from 'argon2';
 
 export const getUsers = async (req, res) => {
     try {
@@ -7,15 +8,13 @@ export const getUsers = async (req, res) => {
     } catch (error) {
         console.error("Error fetching users:", error);
         res.status(500).json({ error: "Internal server error" });
-    } finally {
-        result.release();
     }
 };
 
 const checkUserExists = async (email) => {
     const result = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     return result.rows.length > 0;
-}
+};
 
 export const createUser = async (req, res) => {
     const {email, password} = req.body;
@@ -29,13 +28,11 @@ export const createUser = async (req, res) => {
         if (userExists) {
             return res.status(409).json({ error: "User already exists" });
         }
-        // Insert user creation logic here (hash password, insert into DB, etc.)
+        const hashedPassword = await argon2.hash(password);
+        await pool.query('INSERT INTO users (email, password) VALUES ($1, $2)', [email, hashedPassword]);
         res.status(201).json({ message: "User created successfully" });
     } catch (error) {
         console.error("Error creating user:", error);
         res.status(500).json({ error: "Internal server error" });
     }
-
-    
-
-}
+};
