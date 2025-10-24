@@ -12,7 +12,7 @@ export const getUsers = async (req, res) => {
 };
 
 const checkUserExists = async (email) => {
-    const result = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT id FROM identity.users WHERE email = $1', [email]);
     return result.rows.length > 0;
 };
 
@@ -29,10 +29,27 @@ export const createUser = async (req, res) => {
             return res.status(409).json({ error: "User already exists" });
         }
         const hashedPassword = await argon2.hash(password);
-        await pool.query('INSERT INTO users (email, password) VALUES ($1, $2)', [email, hashedPassword]);
+        await pool.query('INSERT INTO identity.users (email, password) VALUES ($1, $2)', [email, hashedPassword]);
         res.status(201).json({ message: "User created successfully" });
     } catch (error) {
         console.error("Error creating user:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+export const validateUser = async (email, password) => {
+    try {
+        const userExists = await checkUserExists(email);
+        if (!userExists) {
+            throw new Error("User not found");
+        }
+        const validPassword = await argon2.verify(result.rows[0].password, password);
+        if (!validPassword) {
+            throw new Error("Invalid password");
+        }
+        return { email };
+    } catch (error) {
+        console.error("Error validating user:", error);
+        throw new Error("Internal server error");
+    }
+}
