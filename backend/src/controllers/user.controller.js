@@ -52,4 +52,20 @@ export const validateUser = async (email, password) => {
         console.error("Error validating user:", error);
         throw new Error("Internal server error");
     }
-}
+};
+
+export const deleteUser = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ error: "ID is required" });
+    }
+
+    try {
+        await pool.query('DELETE FROM identity.users WHERE id = $1', [id]);
+        res.status(204).send();
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
