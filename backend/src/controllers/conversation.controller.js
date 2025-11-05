@@ -1,14 +1,13 @@
-import { pool } from "../config/db.js";
+import conversationService from "../services/conversation.service.js";
 
-export const getConversations = (req, res) => {
-    pool.query('SELECT * FROM ai.conversations')
-        .then(result => {
-            res.json({ conversations: result.rows });
-        })
-        .catch(error => {
-            console.error("Error fetching conversations:", error);
-            res.status(500).json({ error: "Internal server error" });
-        });
+export const getConversations = async (req, res) => {
+    try {
+        const conversations = await conversationService.listAll();
+        res.json({ conversations });
+    } catch (error) {
+        console.error("Error fetching conversations:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
 };
 
 export const createConversation = async (req, res) => {
@@ -19,17 +18,14 @@ export const createConversation = async (req, res) => {
     }
 
     try {
-        await pool.query(
-            'INSERT INTO ai.conversations (user_id, itinerary_id, session_id) VALUES ($1, $2, $3)',
-            [user_id, itinerary_id, session_id]
-        );
-        res.status(201).json({ message: "Conversation created successfully" });
+        const conversation = await conversationService.create(user_id, itinerary_id, session_id);
+        res.status(201).json({ message: "Conversation created successfully", conversation });
     } catch (error) {
         console.error("Error creating conversation:", error);
         res.status(500).json({ error: "Internal server error" });
     }
-
 };
+    
 
 export const deleteConversation = async (req, res) => {
     const { id } = req.params;
@@ -39,10 +35,11 @@ export const deleteConversation = async (req, res) => {
     }
 
     try {
-        await pool.query('DELETE FROM ai.conversations WHERE id = $1', [id]);
+        await conversationService.delete(id);
         res.json({ message: "Conversation deleted successfully" });
     } catch (error) {
         console.error("Error deleting conversation:", error);
         res.status(500).json({ error: "Internal server error" });
     }
+
 };
