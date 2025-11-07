@@ -3,7 +3,7 @@ import itineraryService from "../services/itineraries.service.js";
 export const getItineraries = async (req, res) => {
     try {
         const itineraries = await itineraryService.listAll();
-        res.json(itineraries);
+        res.json({ itineraries });
     } catch (error) {
         console.error("Error fetching itineraries:", error);
         res.status(500).json({ error: "Internal server error" });

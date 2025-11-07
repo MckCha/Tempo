@@ -3,7 +3,7 @@ import itineraryDaysService from "../services/itinerary_days.service.js";
 export const getItineraryDays = async (req, res) => {
     try {
         const itineraryDays = await itineraryDaysService.listAll();
-        res.json(itineraryDays);
+        res.json({ itineraryDays });
     } catch (error) {
         console.error("Error fetching itinerary days:", error);
         res.status(500).json({ error: "Internal server error" });
