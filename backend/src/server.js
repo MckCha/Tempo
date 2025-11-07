@@ -5,8 +5,8 @@ import conversationRoutes from "./routes/conversation.route.js";
 import messageRoutes from "./routes/message.route.js";
 import itineraryRoutes from "./routes/itineraries.route.js";
 import itineraryDaysRoute from "./routes/itinerary_days.route.js";
+import activitiesRoutes from "./routes/activities.route.js";
 import { testDatabaseConnection } from "./config/db.js";
-
 
 dotenv.config();
 
@@ -20,6 +20,8 @@ app.use("/api/conversations", conversationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/itineraries", itineraryRoutes);
 app.use("/api/itinerary_days", itineraryDaysRoute);
+app.use("/api/activities", activitiesRoutes);
+
 
 
 
