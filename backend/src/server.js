@@ -6,6 +6,7 @@ import messageRoutes from "./routes/message.route.js";
 import itineraryRoutes from "./routes/itineraries.route.js";
 import itineraryDaysRoute from "./routes/itinerary_days.route.js";
 import activitiesRoutes from "./routes/activities.route.js";
+import pointsOfInterestRoutes from "./routes/points_of_interest.route.js";
 import { testDatabaseConnection } from "./config/db.js";
 
 dotenv.config();
@@ -21,7 +22,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/itineraries", itineraryRoutes);
 app.use("/api/itinerary_days", itineraryDaysRoute);
 app.use("/api/activities", activitiesRoutes);
-
+app.use("/api/points_of_interest", pointsOfInterestRoutes);
 
 
 
