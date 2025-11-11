@@ -14,8 +14,22 @@ class ConversationService {
             );
             return rows[0];
         } catch (error) {
-            console.error("Error creating conversation:", error);
-            throw new Error("Internal server error");
+            if (error.code == '23503') {
+                if (error.constraint === 'conversations_user_id_fkey') {
+                    const err = new Error("User not found");
+                    err.statusCode = 404;
+                    throw err;
+                }
+                if (error.constraint === 'conversations_itinerary_id_fkey') {
+                    const err = new Error("Itinerary not found");
+                    err.statusCode = 404;
+                    throw err;
+                }
+                const err = new Error("Invalid reference: related resource not found");
+                err.statusCode = 400;
+                throw err;
+            }
+            throw error;
         }
     }
 

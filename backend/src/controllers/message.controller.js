@@ -22,7 +22,7 @@ export const createMessage = async (req, res) => {
         return res.status(201).json({ message: "Message created successfully", data: newMessage });
     } catch (error) {
         console.error("Error creating message:", error);
-        return res.status(500).json({ error: "Internal server error" });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -38,6 +38,9 @@ export const deleteMessage = async (req, res) => {
         return res.json({ message: "Message deleted successfully" });
     } catch (error) {
         console.error("Error deleting message:", error);
+        if (error.statusCode === 404) {
+            return res.status(404).json({ error: error.message });
+        }
         return res.status(500).json({ error: "Internal server error" });
     }
 };

@@ -14,19 +14,21 @@ class MessageService {
             );
             return rows[0];
         } catch (error) {
-            console.error("Error creating message:", error);
-            throw new Error("Internal server error");
+            if (error.code == '23503') {
+                throw new Error("Conversation not found");
+            }
+            throw error;
         }
     }
 
     async delete(id) {
-        try {
-            await pool.query("DELETE FROM ai.messages WHERE id = $1", [id]);
-            return true;
-        } catch (error) {
-            console.error("Error deleting message:", error);
-            throw new Error("Internal server error");
+        const { rowCount } = await pool.query("DELETE FROM ai.messages WHERE id = $1", [id]);
+        if (rowCount === 0) {
+            const error = new Error("Message not found");
+            error.statusCode = 404;
+            throw error;
         }
+        return true;
     }
 }
 

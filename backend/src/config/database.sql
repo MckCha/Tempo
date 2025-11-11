@@ -12,9 +12,9 @@ CREATE SCHEMA ai;
 CREATE TABLE ai.conversations (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES identity.users(id),
-    itinerary_id INT,
+    itinerary_id INT UNIQUE REFERENCES travel.itineraries(id) ON DELETE CASCADE,
     session_id UUID
-)
+);
 CREATE TABLE ai.messages (
     id SERIAL PRIMARY KEY,
     conversation_id INT REFERENCES ai.conversations(id),
@@ -25,7 +25,7 @@ CREATE TABLE ai.messages (
 );
 
 CREATE SCHEMA travel;
-CREATE TABLE travel.itinerary (
+CREATE TABLE travel.itineraries (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES identity.users(id),
     title VARCHAR(255) NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE travel.itinerary (
 );
 CREATE TABLE travel.itinerary_days (
     id SERIAL PRIMARY KEY,
-    itinerary_id INT REFERENCES travel.itinerary(id),
+    itinerary_id INT REFERENCES travel.itineraries(id),
     day_number INT
 );
 CREATE TABLE travel.activities (
