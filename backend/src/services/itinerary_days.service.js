@@ -14,19 +14,28 @@ class ItineraryDaysService {
             );
             return rows[0];
         } catch (error) {
-            console.error("Error creating itinerary day:", error);
-            throw new Error("Database error");
+            if (error.code === '23503') {
+                if (error.constraint === 'itinerary_days_itinerary_id_fkey') {
+                    const err = new Error("Itinerary not found");
+                    err.statusCode = 404;
+                    throw err;
+                }
+                const err = new Error("Invalid reference: related resource not found");
+                err.statusCode = 400;
+                throw err;
+            }
+            throw error;
         }
     }
 
     async delete(id) {
-        try {
-            await pool.query("DELETE FROM travel.itinerary_days WHERE id = $1", [id]);
-            return true;
-        } catch (error) {
-            console.error("Error deleting itinerary day:", error);
-            throw new Error("Database error");
+        const { rowCount } = await pool.query("DELETE FROM travel.itinerary_days WHERE id = $1", [id]);
+        if (rowCount === 0) {
+            const error = new Error("Itinerary day not found");
+            error.statusCode = 404;
+            throw error;
         }
+        return true;
     }
 }
 

@@ -16,19 +16,28 @@ class ActivitiesService {
             );
             return rows[0];
         } catch (error) {
-            console.error("Error creating activity:", error);
-            throw new Error("Error creating activity");
+            if (error.code === '23503') {
+                switch (error.constraint) {
+                    case 'activities_itinerary_days_id_fkey':
+                        throw Object.assign(new Error('Itinerary day not found'), { statusCode: 404 });
+                    case 'travel_poi_id_fkey':
+                        throw Object.assign(new Error('Point of Interest not found'), { statusCode: 404 });
+                    default:
+                        throw Object.assign(new Error('Invalid reference: related resource not found'), { statusCode: 400 });
+                }
+            }
+            throw error;
         }
     }
 
     async delete(id) {
-        try {
-            await pool.query(`DELETE FROM travel.activities WHERE id = $1`, [id]);
-            return true;
-        } catch (error) {
-            console.error("Error deleting activity:", error);
-            throw new Error("Error deleting activity");
+        const { rowCount } = await pool.query("DELETE FROM travel.activities WHERE id = $1", [id]);
+        if (rowCount === 0) {
+            const error = new Error("Activity not found");
+            error.statusCode = 404;
+            throw error;
         }
+        return true;
     }
 }
 

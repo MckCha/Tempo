@@ -19,10 +19,10 @@ export const createItinerary = async (req, res) => {
 
     try {
         const itinerary = await itinerariesService.create(user_id, title, destination_country, destination_city, trip_type, start_date, end_date);
-        res.status(201).json({ message: "Itinerary created successfully", itinerary });
+        return res.status(201).json({ message: "Itinerary created successfully", itinerary });
     } catch (error) {
         console.error("Error creating itineraries:", error);
-        res.status(500).json({ error: "Internal server error" });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -33,9 +33,12 @@ export const deleteItinerary = async (req, res) => {
     }
     try {
         await itinerariesService.delete(id);
-        res.json({ message: "Itinerary deleted successfully" });
+        return res.json({ message: "Itinerary deleted successfully" });
     } catch (error) {
         console.error("Error deleting itineraries:", error);
-        res.status(500).json({ error: "Internal server error" });
+        if (error.statusCode === 404) {
+            return res.status(404).json({ error: error.message });
+        }
+        return res.status(500).json({ error: error.message });
     }
 };

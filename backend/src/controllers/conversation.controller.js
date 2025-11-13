@@ -19,10 +19,10 @@ export const createConversation = async (req, res) => {
 
     try {
         const conversation = await conversationService.create(user_id, itinerary_id, session_id);
-        res.status(201).json({ message: "Conversation created successfully", conversation });
+        return res.status(201).json({ message: "Conversation created successfully", conversation });
     } catch (error) {
         console.error("Error creating conversation:", error);
-        res.status(500).json({ error: "Internal server error" });
+        return res.status(500).json({ error: error.message });
     }
 };
     
@@ -36,10 +36,13 @@ export const deleteConversation = async (req, res) => {
 
     try {
         await conversationService.delete(id);
-        res.json({ message: "Conversation deleted successfully" });
+        return res.json({ message: "Conversation deleted successfully" });
     } catch (error) {
         console.error("Error deleting conversation:", error);
-        res.status(500).json({ error: "Internal server error" });
+        if (error.statusCode === 404) {
+            return res.status(404).json({ error: error.message });
+        }
+        return res.status(500).json({ error: "Internal server error" });
     }
 
 };

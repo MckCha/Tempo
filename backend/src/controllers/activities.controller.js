@@ -19,10 +19,10 @@ export const createActivities = async (req, res) => {
 
     try {
         await activitiesService.create({ itinerary_day_id, poi_id, order_index, estimated_cost, currency, start_time, end_time });
-        res.status(201).json({ message: "Activity created successfully" });
+        return res.status(201).json({ message: "Activity created successfully" });
     } catch (error) {
         console.error("Error creating activity:", error);
-        res.status(500).json({ error: "Internal server error" });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -35,9 +35,11 @@ export const deleteActivities = async (req, res) => {
 
     try {
         await activitiesService.delete(id);
-        res.json({ message: "Activity deleted successfully" });
+        return res.json({ message: "Activity deleted successfully" });
     } catch (error) {
-        console.error("Error deleting activity:", error);
-        res.status(500).json({ error: "Internal server error" });
+        if (error.statusCode === 404) {
+            return res.status(404).json({ error: error.message });
+        }
+        return res.status(500).json({ error: "Internal server error" });
     }
 };
