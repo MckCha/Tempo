@@ -3,3 +3,8 @@ langchain-community
 langchain-openai
 python-dotenv
 pydantic
+openmeteo-requests
+requests-cache
+retry-requests
+numpy
+pandas
