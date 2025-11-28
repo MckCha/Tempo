@@ -5,12 +5,25 @@ from tools import flight_quotes, hotel_search, weather_info, poi_search
 
 agent = build_research_agent(tools=[weather_info])
 
+#user_input = input("Provide your travel details: ")
+user_input = """
+I am traveling to Porterville, CA.
+Please give me the weather for today.
+Also gather web information on potential natural disasters in that area.
+"""
+
 response = agent.invoke({
-    "messages": [{"role": "user", "content": "I am planning a trip to Porterville, California. What is the weather going to be like from June 1st to June 7th, 2025?"}]
+    "messages": [{"role": "user", "content": user_input}]
 })
 
-ai_msg = response["messages"][-1]
+tool_msgs = [m for m in response["messages"] if getattr(m, "type", "") == "tool"]
+weather_data = next((m.content for m in tool_msgs if m.name == "weather_info"), None)
 
+if weather_data:
+    print("\n Weather Info Retrieved from Tool:")
+    print(f"{weather_data}\n")
+
+ai_msg = response["messages"][-1]
 text = extract_text_from_api(ai_msg)
 
 try:

@@ -1,5 +1,5 @@
 from urllib import response
-from langchain_community.tools import RequestsGetTool
+from langchain_community.tools import RequestsGetTool, DuckDuckGoSearchRun
 from langchain_core.tools import tool
 
 import openmeteo_requests
@@ -15,6 +15,13 @@ retry_session = retry(cache_session, retries = 5, backoff_factor = 0.3)
 openmeteo = openmeteo_requests.Client(session=retry_session)
 
 @tool
+def web_search(query: str, num_results: int = 5) -> str:
+    """Perform a web search and return the top results."""
+    ddg = DuckDuckGoSearchRun(max_results=num_results)
+    results = ddg.run(query)
+    return results
+
+@tool
 def flight_quotes(origin: str, destination: str, date: str, flight_budget: float, currency: str) -> str:
     """Get flight quotes for a given origin, destination, and date."""
     # Placeholder implementation
@@ -25,7 +32,7 @@ def hotel_search(city: str, check_in: str, check_out: str, hotel_budget: float, 
     # Placeholder implementation
 
 @tool
-def weather_info(lat: float, lon: float, start_date: str, end_date: str) -> str:
+def weather_info(lat: float, lon: float, start_date: str, end_date: str, temperature_unit: str) -> str:
     """Get weather information for a given city and date."""
     params = {
 	    "latitude": lat,
@@ -33,13 +40,19 @@ def weather_info(lat: float, lon: float, start_date: str, end_date: str) -> str:
 	    "hourly": "temperature_2m",
         "start_date": start_date,
         "end_date": end_date,
+        "temperature_unit": "fahrenheit",
         "timezone": "auto"
     }
     url = choose_endpoint(start_date, end_date)
     responses = openmeteo.weather_api(url, params=params)
     response = responses[0]
-    
-    # Process response data
+    temps = response.Hourly().Variables(0).ValuesAsNumpy()
+    return {
+        "parameters": params,
+        "min_temp_f": float(temps.min()),
+        "max_temp_f": float(temps.max()),
+        "avg_temp_f": float(temps.mean())
+    }
 
 # Helper function to determine the correct API endpoint based on date range
 def choose_endpoint(start_date, end_date):
