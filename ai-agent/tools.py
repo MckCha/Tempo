@@ -1,4 +1,3 @@
-from urllib import response
 from langchain_community.tools import RequestsGetTool, DuckDuckGoSearchRun
 from langchain_core.tools import tool
 
@@ -6,8 +5,6 @@ import openmeteo_requests
 import requests_cache
 from retry_requests import retry
 import datetime
-import numpy as np
-import pandas as pd
 
 # Set up cached and retried session for Open-Meteo requests
 cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
@@ -64,6 +61,45 @@ def choose_endpoint(start_date, end_date):
     return "https://api.open-meteo.com/v1/forecast"
 
 @tool
-def poi_search(city: str, poi_type: str, characteristics: str) -> str:
-    """Search for points of interest in a given city based off of characteristics."""
-    # Placeholder implementation
+def poi_search(lat: float, lon: float, radius: int = 5000, poi_categories: str = "all") -> str:
+    """Find multiple points of interest near a location (museums, restaurants, parks, attractions)."""
+    
+    # Build category filters based on input
+    query = f"""
+    [out:json][timeout:25];
+    (
+      node["tourism"~"museum|attraction|artwork|viewpoint"]["name"](around:{radius},{lat},{lon});
+      node["amenity"~"restaurant|cafe|bar"]["name"](around:{radius},{lat},{lon});
+      node["leisure"~"park|garden|nature_reserve"]["name"](around:{radius},{lat},{lon});
+      node["historic"]["name"](around:{radius},{lat},{lon});
+    );
+    out body 15;
+    """
+    
+    response = cache_session.get(
+        "https://overpass-api.de/api/interpreter",
+        params={"data": query},
+        headers={"User-Agent": "TravelAgent/1.0"}
+    )
+    
+    data = response.json()
+    
+    pois = []
+    for elem in data.get("elements", []):
+        tags = elem.get("tags", {})
+        poi_type = (tags.get("tourism") or tags.get("amenity") or 
+                   tags.get("leisure") or tags.get("historic") or "other")
+        
+        pois.append({
+            "name": tags.get("name", "Unnamed"),
+            "type": poi_type,
+            "lat": elem.get("lat"),
+            "lon": elem.get("lon"),
+            "address": tags.get("addr:street", ""),
+        })
+    
+    return {
+        "search_location": {"lat": lat, "lon": lon, "radius_m": radius},
+        "poi_count": len(pois),
+        "recommendations": pois[:10]  # Top 10
+    }
