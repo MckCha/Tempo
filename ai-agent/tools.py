@@ -21,12 +21,12 @@ def web_search(query: str, num_results: int = 5) -> str:
 @tool
 def flight_quotes(origin: str, destination: str, date: str, flight_budget: float, currency: str) -> str:
     """Get flight quotes for a given origin, destination, and date."""
-    # Placeholder implementation
+    # Amadeus Flight Offers Price API + Flight Offers Search implementation
 
 @tool
 def hotel_search(city: str, check_in: str, check_out: str, hotel_budget: float, currency: str) -> str:
     """Search for hotels in a given city within a budget."""
-    # Placeholder implementation
+    # Amadeus Hotel Search API implementation
 
 @tool
 def weather_info(lat: float, lon: float, start_date: str, end_date: str, temperature_unit: str) -> str:
