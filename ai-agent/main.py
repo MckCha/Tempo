@@ -3,14 +3,16 @@ from utils import extract_text_from_api
 from agent_executor import build_research_agent
 from tools import flight_quotes, hotel_search, weather_info, poi_search
 
-agent = build_research_agent(tools=[weather_info, poi_search])
+agent = build_research_agent(tools=[weather_info, poi_search, hotel_search])
 
 #user_input = input("Provide your travel details: ")
 user_input = """
-I am traveling to Los Angeles, California.
-Please give me the weather for today and the activities while I'm there.
-Also gather web information on potential natural disasters in that area.
+I am traveling to Los Angeles (34.0549° N, 118.2426° W).
+Please find hotel recommendations within 100km.
 """
+
+# Please give me the weather for today and the activities while I'm there.
+# Also gather web information on potential natural disasters in that area.
 
 response = agent.invoke({
     "messages": [{"role": "user", "content": user_input}]
@@ -19,6 +21,7 @@ response = agent.invoke({
 tool_msgs = [m for m in response["messages"] if getattr(m, "type", "") == "tool"]
 weather_data = next((m.content for m in tool_msgs if m.name == "weather_info"), None)
 poi_data = next((m.content for m in tool_msgs if m.name == "poi_search"), None)
+hotel_data = next((m.content for m in tool_msgs if m.name == "hotel_search"), None)
 
 if weather_data:
     print("\n Weather Info Retrieved from Tool:")
@@ -27,6 +30,10 @@ if weather_data:
 if poi_data:
     print("\n Points of Interest Retrieved from Tool:")
     print(f"{poi_data}\n")
+
+if hotel_data:
+    print("\n Hotel Information Retrieved from Tool:")
+    print(f"{hotel_data}\n")
 
 
 ai_msg = response["messages"][-1]

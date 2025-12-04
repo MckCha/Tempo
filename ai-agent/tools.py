@@ -2,9 +2,10 @@ from langchain_community.tools import RequestsGetTool, DuckDuckGoSearchRun
 from langchain_core.tools import tool
 
 import openmeteo_requests
-import requests_cache
+import requests_cache, requests
 from retry_requests import retry
 import datetime
+import os
 
 # Set up cached and retried session for Open-Meteo requests
 cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
@@ -24,9 +25,43 @@ def flight_quotes(origin: str, destination: str, date: str, flight_budget: float
     # Amadeus Flight Offers Price API + Flight Offers Search implementation
 
 @tool
-def hotel_search(city: str, check_in: str, check_out: str, hotel_budget: float, currency: str) -> str:
+def hotel_search(lat: float, lon: float, radius: int = 10, radiusUnit: str = "km") -> str:
     """Search for hotels in a given city within a budget."""
-    # Amadeus Hotel Search API implementation
+    auth_response = requests.post("https://test.api.amadeus.com/v1/security/oauth2/token",
+        data={
+            "grant_type": "client_credentials",
+            "client_id": os.getenv("AMADEUS_API_KEY"),
+            "client_secret": os.getenv("AMADEUS_API_SECRET")
+        }
+    )
+
+    token = auth_response.json()["access_token"]
+
+    paramaters = {
+        "latitude": lat,
+        "longitude": lon,
+        "radius": radius,
+        "radiusUnit": radiusUnit,
+    }
+
+    hotel = cache_session.get(
+        "https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-geocode",
+        params = paramaters,
+        headers = {"Authorization": f"Bearer {token}"}
+    )
+    
+    data = hotel.json()
+    
+    hotels = data.get("data", [])[:10]  # Top 10 hotels
+
+    top_hotels = []
+    for hotel in hotels:
+        top_hotels.append({
+            "name": hotel.get("name"),
+            "hotelId": hotel.get("hotelId"),
+            "iataCode": hotel.get("iataCode"),
+        })    
+    return top_hotels
 
 @tool
 def weather_info(lat: float, lon: float, start_date: str, end_date: str, temperature_unit: str) -> str:
