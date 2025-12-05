@@ -8,11 +8,10 @@ agent = build_research_agent(tools=[weather_info, poi_search, hotel_search])
 #user_input = input("Provide your travel details: ")
 user_input = """
 I am traveling to Los Angeles (34.0549° N, 118.2426° W).
-Please find hotel recommendations within 100km.
+Find me hotel recommendations within 100km.
+Give me the weather for today and the activities while I'm there.
+Also gather web information on potential natural disasters in that area.
 """
-
-# Please give me the weather for today and the activities while I'm there.
-# Also gather web information on potential natural disasters in that area.
 
 response = agent.invoke({
     "messages": [{"role": "user", "content": user_input}]

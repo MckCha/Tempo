@@ -27,15 +27,7 @@ def flight_quotes(origin: str, destination: str, date: str, flight_budget: float
 @tool
 def hotel_search(lat: float, lon: float, radius: int = 10, radiusUnit: str = "km") -> str:
     """Search for hotels in a given city within a budget."""
-    auth_response = requests.post("https://test.api.amadeus.com/v1/security/oauth2/token",
-        data={
-            "grant_type": "client_credentials",
-            "client_id": os.getenv("AMADEUS_API_KEY"),
-            "client_secret": os.getenv("AMADEUS_API_SECRET")
-        }
-    )
-
-    token = auth_response.json()["access_token"]
+    token = get_amadeus_token()
 
     paramaters = {
         "latitude": lat,
@@ -62,6 +54,16 @@ def hotel_search(lat: float, lon: float, radius: int = 10, radiusUnit: str = "km
             "iataCode": hotel.get("iataCode"),
         })    
     return top_hotels
+
+def get_amadeus_token():
+    auth_response = requests.post("https://test.api.amadeus.com/v1/security/oauth2/token",
+        data={
+            "grant_type": "client_credentials",
+            "client_id": os.getenv("AMADEUS_API_KEY"),
+            "client_secret": os.getenv("AMADEUS_API_SECRET")
+        }
+    )
+    return auth_response.json()["access_token"]
 
 @tool
 def weather_info(lat: float, lon: float, start_date: str, end_date: str, temperature_unit: str) -> str:
