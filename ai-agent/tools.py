@@ -1,4 +1,4 @@
-from langchain_community.tools import RequestsGetTool, DuckDuckGoSearchRun
+from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.tools import tool
 
 import openmeteo_requests
@@ -22,6 +22,7 @@ def web_search(query: str, num_results: int = 5) -> str:
 @tool
 def flight_quotes(origin: str, destination: str, date: str, flight_budget: float, currency: str) -> str:
     """Get flight quotes for a given origin, destination, and date."""
+    token = get_amadeus_token()
     # Amadeus Flight Offers Price API + Flight Offers Search implementation
 
 @tool
