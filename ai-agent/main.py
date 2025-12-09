@@ -1,9 +1,9 @@
 from prompts import parser
 from utils import extract_text_from_api
 from agent_executor import build_research_agent
-from tools import flight_quotes, hotel_search, weather_info, poi_search
+from tools import flight_quotes, hotel_list, weather_info, poi_search
 
-agent = build_research_agent(tools=[weather_info, poi_search, hotel_search])
+agent = build_research_agent(tools=[weather_info, poi_search, hotel_list])
 
 #user_input = input("Provide your travel details: ")
 user_input = """
@@ -20,7 +20,7 @@ response = agent.invoke({
 tool_msgs = [m for m in response["messages"] if getattr(m, "type", "") == "tool"]
 weather_data = next((m.content for m in tool_msgs if m.name == "weather_info"), None)
 poi_data = next((m.content for m in tool_msgs if m.name == "poi_search"), None)
-hotel_data = next((m.content for m in tool_msgs if m.name == "hotel_search"), None)
+hotel_data = next((m.content for m in tool_msgs if m.name == "hotel_list"), None)
 
 if weather_data:
     print("\n Weather Info Retrieved from Tool:")

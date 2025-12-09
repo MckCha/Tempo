@@ -6,6 +6,7 @@ import requests_cache, requests
 from retry_requests import retry
 import datetime
 import os
+from amadeus import Client, ResponseError
 
 # Set up cached and retried session for Open-Meteo requests
 cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
@@ -26,45 +27,56 @@ def flight_quotes(origin: str, destination: str, date: str, flight_budget: float
     # Amadeus Flight Offers Price API + Flight Offers Search implementation
 
 @tool
-def hotel_search(lat: float, lon: float, radius: int = 10, radiusUnit: str = "km") -> str:
-    """Search for hotels in a given city within a budget."""
-    token = get_amadeus_token()
-
-    paramaters = {
-        "latitude": lat,
-        "longitude": lon,
-        "radius": radius,
-        "radiusUnit": radiusUnit,
-    }
-
-    hotel = cache_session.get(
-        "https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-geocode",
-        params = paramaters,
-        headers = {"Authorization": f"Bearer {token}"}
-    )
+def hotel_list(cityCode: str, radius: int, radiusUnit: str, amenities: list, ratings: list, budget: float = None, max_hotels: int = 5) -> str:
+    """
+    Search for hotels in a given city within a budget if applicable.
     
-    data = hotel.json()
+    Args:
+        cityCode (str): The IATA city code.
+        radius (int): Search radius.
+        radiusUnit (str): Unit for radius (e.g., 'KM', 'MI').
+        amenities (list): List of desired amenities.
+        ratings (list): List of desired hotel ratings.
+        budget (float, optional): Maximum budget for hotel stay.
+        max_hotels (int, optional): Maximum number of hotels to return default is 5.
     
-    hotels = data.get("data", [])[:10]  # Top 10 hotels
+    """
+    amadeus = get_amadeus_token()
+    
+    try:
+        response = amadeus.reference_data.locations.hotels.by_city.get(
+            cityCode = cityCode,
+            radius = radius,
+            radiusUnit = radiusUnit,
+            amenities = amenities,
+            ratings = ratings
+        )
 
-    top_hotels = []
-    for hotel in hotels:
-        top_hotels.append({
-            "name": hotel.get("name"),
-            "hotelId": hotel.get("hotelId"),
-            "iataCode": hotel.get("iataCode"),
-        })    
-    return top_hotels
+        hotels_data = response.data
+
+        limited_hotels = hotels_data[:max_hotels]
+
+        simplified_hotels = []
+        for hotel in limited_hotels:
+            hotel_info = {
+                "name": hotel.get("name"),
+                "address": hotel.get("address", {}).get("lines", []),
+                "city": hotel.get("address", {}).get("cityName"),
+                "rating": hotel.get("rating"),
+                "amenities": hotel.get("amenities", []),
+            }
+            simplified_hotels.append(hotel_info)
+
+        return simplified_hotels
+    except ResponseError as error:
+        return error.message
 
 def get_amadeus_token():
-    auth_response = requests.post("https://test.api.amadeus.com/v1/security/oauth2/token",
-        data={
-            "grant_type": "client_credentials",
-            "client_id": os.getenv("AMADEUS_API_KEY"),
-            "client_secret": os.getenv("AMADEUS_API_SECRET")
-        }
+    amadeus = Client(
+        client_id=os.getenv("AMADEUS_API_KEY"),
+        client_secret=os.getenv("AMADEUS_API_SECRET")
     )
-    return auth_response.json()["access_token"]
+    return amadeus
 
 @tool
 def weather_info(lat: float, lon: float, start_date: str, end_date: str, temperature_unit: str) -> str:
