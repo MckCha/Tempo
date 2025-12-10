@@ -13,6 +13,8 @@ cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
 retry_session = retry(cache_session, retries = 5, backoff_factor = 0.3)
 openmeteo = openmeteo_requests.Client(session=retry_session)
 
+_amadeus_client = None
+
 @tool
 def web_search(query: str, num_results: int = 5) -> str:
     """Perform a web search and return the top results."""
@@ -23,7 +25,7 @@ def web_search(query: str, num_results: int = 5) -> str:
 @tool
 def flight_quotes(origin: str, destination: str, date: str, flight_budget: float, currency: str) -> str:
     """Get flight quotes for a given origin, destination, and date."""
-    token = get_amadeus_token()
+    amadeus = get_amadeus_client()
     # Amadeus Flight Offers Price API + Flight Offers Search implementation
 
 @tool
@@ -41,7 +43,7 @@ def hotel_list(cityCode: str, radius: int, radiusUnit: str, amenities: list, rat
         max_hotels (int, optional): Maximum number of hotels to return default is 5.
     
     """
-    amadeus = get_amadeus_token()
+    amadeus = get_amadeus_client()
     
     try:
         response = amadeus.reference_data.locations.hotels.by_city.get(
@@ -71,12 +73,15 @@ def hotel_list(cityCode: str, radius: int, radiusUnit: str, amenities: list, rat
     except ResponseError as error:
         return error.message
 
-def get_amadeus_token():
-    amadeus = Client(
-        client_id=os.getenv("AMADEUS_API_KEY"),
-        client_secret=os.getenv("AMADEUS_API_SECRET")
-    )
-    return amadeus
+def get_amadeus_client():
+    """Get or create singleton Amadeus client instance."""
+    global _amadeus_client
+    if _amadeus_client is None:
+        _amadeus_client = Client(
+            client_id=os.getenv("AMADEUS_API_KEY"),
+            client_secret=os.getenv("AMADEUS_API_SECRET")
+        )
+    return _amadeus_client
 
 @tool
 def weather_info(lat: float, lon: float, start_date: str, end_date: str, temperature_unit: str) -> str:
