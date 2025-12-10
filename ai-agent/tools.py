@@ -23,10 +23,42 @@ def web_search(query: str, num_results: int = 5) -> str:
     return results
 
 @tool
-def flight_quotes(origin: str, destination: str, date: str, flight_budget: float, currency: str) -> str:
-    """Get flight quotes for a given origin, destination, and date."""
+def flight_quotes(origin: str, destination: str, date: str, adults: int = 1) -> str:
+    """
+    Get flight quotes for a given origin, destination, and date.
+    
+    Args:
+        origin (str): The IATA code for the origin airport.
+        destination (str): The IATA code for the destination airport.
+        date (str): The departure date in YYYY-MM-DD format.
+        adults (int): Number of adult passengers with age 12 or older (default = 1).
+    """
     amadeus = get_amadeus_client()
-    # Amadeus Flight Offers Price API + Flight Offers Search implementation
+
+    try: 
+        departure = datetime.datetime.fromisoformat(date)
+
+        if departure < datetime.datetime.now():
+            return {
+                "error": "Departure date must be in the future.",
+                "provided_date": date,
+                "today": str(datetime.datetime.today())
+            }
+        
+        response = amadeus.shopping.flight_offers_search.get(
+            originLocationCode=origin,
+            destinationLocationCode=destination,
+            departureDate=date,
+            adults=adults,
+            max=5
+        )
+
+        offers = response.data[:5]
+
+        return offers
+    except ResponseError as error:
+        return error.description
+
 
 @tool
 def hotel_list(cityCode: str, radius: int, radiusUnit: str, amenities: list, ratings: list, budget: float = None, max_hotels: int = 5) -> str:
@@ -71,7 +103,7 @@ def hotel_list(cityCode: str, radius: int, radiusUnit: str, amenities: list, rat
 
         return simplified_hotels
     except ResponseError as error:
-        return error.message
+        return error.description
 
 def get_amadeus_client():
     """Get or create singleton Amadeus client instance."""

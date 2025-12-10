@@ -3,14 +3,12 @@ from utils import extract_text_from_api
 from agent_executor import build_research_agent
 from tools import flight_quotes, hotel_list, weather_info, poi_search
 
-agent = build_research_agent(tools=[weather_info, poi_search, hotel_list])
+agent = build_research_agent(tools=[flight_quotes])
 
 #user_input = input("Provide your travel details: ")
 user_input = """
 I am traveling to Los Angeles (34.0549° N, 118.2426° W).
-Find me hotel recommendations within 100km.
-Give me the weather for today and the activities while I'm there.
-Also gather web information on potential natural disasters in that area.
+Find me flight quotes from New York (JFK) to Los Angeles (LAX) on 2025-12-12 for 1 adult.
 """
 
 response = agent.invoke({
@@ -21,6 +19,7 @@ tool_msgs = [m for m in response["messages"] if getattr(m, "type", "") == "tool"
 weather_data = next((m.content for m in tool_msgs if m.name == "weather_info"), None)
 poi_data = next((m.content for m in tool_msgs if m.name == "poi_search"), None)
 hotel_data = next((m.content for m in tool_msgs if m.name == "hotel_list"), None)
+flight_data = next((m.content for m in tool_msgs if m.name == "flight_quotes"), None)
 
 if weather_data:
     print("\n Weather Info Retrieved from Tool:")
@@ -34,6 +33,9 @@ if hotel_data:
     print("\n Hotel Information Retrieved from Tool:")
     print(f"{hotel_data}\n")
 
+if flight_data:
+    print("\n Flight Quotes Retrieved from Tool:")
+    print(f"{flight_data}\n")
 
 ai_msg = response["messages"][-1]
 text = extract_text_from_api(ai_msg)
