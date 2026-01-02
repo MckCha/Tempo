@@ -23,39 +23,73 @@ def web_search(query: str, num_results: int = 5) -> str:
     return results
 
 @tool
-def flight_quotes(origin: str, destination: str, date: str, adults: int = 1) -> str:
+def flight_quotes(origin: str, destination: str, departure_date: str, return_date: str, adults: int = 1, budget: float = None) -> str:
     """
-    Get flight quotes for a given origin, destination, and date.
+    Get flight quotes for a round trip with separate outbound and return flights.
     
     Args:
         origin (str): The IATA code for the origin airport.
         destination (str): The IATA code for the destination airport.
-        date (str): The departure date in YYYY-MM-DD format.
+        departure_date (str): The departure date in YYYY-MM-DD format.
+        return_date (str): The return date in YYYY-MM-DD format.
         adults (int): Number of adult passengers with age 12 or older (default = 1).
+        budget (float, optional): Maximum budget for the round trip.
     """
     amadeus = get_amadeus_client()
 
     try: 
-        departure = datetime.datetime.fromisoformat(date)
-
-        if departure < datetime.datetime.now():
-            return {
-                "error": "Departure date must be in the future.",
-                "provided_date": date,
-                "today": str(datetime.datetime.today())
-            }
-        
-        response = amadeus.shopping.flight_offers_search.get(
+        outbound_response = amadeus.shopping.flight_offers_search.get(
             originLocationCode=origin,
             destinationLocationCode=destination,
-            departureDate=date,
+            departureDate=departure_date,
             adults=adults,
-            max=5
         )
 
-        offers = response.data[:5]
+        return_response = amadeus.shopping.flight_offers_search.get(
+            originLocationCode=destination,
+            destinationLocationCode=origin,
+            departureDate=return_date,
+            adults=adults,
+        )
 
-        return offers
+        outbound_offers = outbound_response.data[:5] # Get top 5 offers
+        return_offers = return_response.data[:5] 
+
+        trip_combinations = []
+        for outbound in outbound_offers:
+            for return_flight in return_offers:
+                outbound_price = float(outbound["price"]["grandTotal"])
+                return_price = float(return_flight["price"]["grandTotal"])
+                total_price = outbound_price + return_price
+
+                if budget is not None and total_price > budget:
+                    continue
+                
+                trip_combinations.append({
+                    "total_price": total_price,
+                    "currency": outbound["price"]["currency"],
+                    "outbound": {
+                        "flight_id": outbound["id"],
+                        "price": outbound_price,
+                        "departure_time": outbound["itineraries"][0]["segments"][0]["departure"]["at"],
+                        "arrival_time": outbound["itineraries"][0]["segments"][-1]["arrival"]["at"],
+                        "airline": outbound["itineraries"][0]["segments"][0]["carrierCode"],
+                        "number_of_stops": len(outbound["itineraries"][0]["segments"]) - 1
+                    },
+                    "return": {
+                        "flight_id": return_flight["id"],
+                        "price": return_price,
+                        "departure_time": return_flight["itineraries"][0]["segments"][0]["departure"]["at"],
+                        "arrival_time": return_flight["itineraries"][0]["segments"][-1]["arrival"]["at"],
+                        "airline": return_flight["itineraries"][0]["segments"][0]["carrierCode"],
+                        "number_of_stops": len(return_flight["itineraries"][0]["segments"]) - 1 
+                    }
+                })
+                
+        trip_combinations.sort(key=lambda x: x["total_price"])
+        return trip_combinations[:5] if trip_combinations else [
+            {"message": "No flights found within the specified budget."}
+        ]
     except ResponseError as error:
         return error.description
 

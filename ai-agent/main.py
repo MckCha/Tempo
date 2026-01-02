@@ -8,7 +8,7 @@ agent = build_research_agent(tools=[flight_quotes])
 #user_input = input("Provide your travel details: ")
 user_input = """
 I am traveling to Los Angeles (34.0549° N, 118.2426° W).
-Find me flight quotes from New York (JFK) to Los Angeles (LAX) on 2025-12-12 for 1 adult.
+Find me round-trip flight quotes from New York (JFK) to Los Angeles (LAX), departing on 2026-01-12 and returning on 2026-01-15 for 1 adult.
 """
 
 response = agent.invoke({
