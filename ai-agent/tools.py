@@ -67,24 +67,24 @@ def flight_quotes(origin: str, destination: str, departure_date: str, return_dat
                 
                 trip_combinations.append({
                     "total_price": total_price,
-                    "currency": outbound["price"]["currency"],
+                    "currency": outbound.get("price", {}).get("currency"),
                     "outbound": {
-                        "flight_id": outbound["id"],
+                        "flight_id": outbound.get("id"),
                         "price": outbound_price,
-                        "departure_time": outbound["itineraries"][0]["segments"][0]["departure"]["at"],
-                        "arrival_time": outbound["itineraries"][0]["segments"][-1]["arrival"]["at"],
-                        "airline": outbound["itineraries"][0]["segments"][0]["carrierCode"],
-                        "number_of_stops": len(outbound["itineraries"][0]["segments"]) - 1
+                        "departure_time": outbound.get("itineraries", [{}])[0].get("segments", [{}])[0].get("departure", {}).get("at"),
+                        "arrival_time": outbound.get("itineraries", [{}])[0].get("segments", [])[-1].get("arrival", {}).get("at") if outbound.get("itineraries", [{}])[0].get("segments") else None,
+                        "airline": outbound.get("itineraries", [{}])[0].get("segments", [{}])[0].get("carrierCode"),
+                        "number_of_stops": len(outbound.get("itineraries", [{}])[0].get("segments", [])) - 1
                     },
                     "return": {
-                        "flight_id": return_flight["id"],
+                        "flight_id": return_flight.get("id"),
                         "price": return_price,
-                        "departure_time": return_flight["itineraries"][0]["segments"][0]["departure"]["at"],
-                        "arrival_time": return_flight["itineraries"][0]["segments"][-1]["arrival"]["at"],
-                        "airline": return_flight["itineraries"][0]["segments"][0]["carrierCode"],
-                        "number_of_stops": len(return_flight["itineraries"][0]["segments"]) - 1 
+                        "departure_time": return_flight.get("itineraries", [{}])[0].get("segments", [{}])[0].get("departure", {}).get("at"),
+                        "arrival_time": return_flight.get("itineraries", [{}])[0].get("segments", [])[-1].get("arrival", {}).get("at") if return_flight.get("itineraries", [{}])[0].get("segments") else None,
+                        "airline": return_flight.get("itineraries", [{}])[0].get("segments", [{}])[0].get("carrierCode"),
+                        "number_of_stops": len(return_flight.get("itineraries", [{}])[0].get("segments", [])) - 1 
                     }
-                })
+})
                 
         trip_combinations.sort(key=lambda x: x["total_price"])
         return trip_combinations[:5] if trip_combinations else [
@@ -129,7 +129,6 @@ def hotel_list(cityCode: str, radius: int, radiusUnit: str, amenities: list, rat
             hotel_info = {
                 "name": hotel.get("name"),
                 "address": hotel.get("address", {}).get("lines", []),
-                "city": hotel.get("address", {}).get("cityName"),
                 "rating": hotel.get("rating"),
                 "amenities": hotel.get("amenities", []),
             }
