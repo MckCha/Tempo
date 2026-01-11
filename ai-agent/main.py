@@ -3,12 +3,11 @@ from utils import extract_text_from_api
 from agent_executor import build_research_agent
 from tools import flight_quotes, hotel_list, weather_info, poi_search
 
-agent = build_research_agent(tools=[flight_quotes])
+agent = build_research_agent(tools=[flight_quotes, hotel_list, weather_info, poi_search])
 
 #user_input = input("Provide your travel details: ")
 user_input = """
-I am traveling to Los Angeles (34.0549° N, 118.2426° W).
-Find me round-trip flight quotes from New York (JFK) to Los Angeles (LAX), departing on 2026-01-12 and returning on 2026-01-15 for 1 adult.
+Weather info in la today?
 """
 
 response = agent.invoke({

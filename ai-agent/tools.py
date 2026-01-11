@@ -2,7 +2,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.tools import tool
 
 import openmeteo_requests
-import requests_cache, requests
+import requests_cache
 from retry_requests import retry
 import datetime
 import os
@@ -93,19 +93,14 @@ def flight_quotes(origin: str, destination: str, departure_date: str, return_dat
     except ResponseError as error:
         return error.description
 
-
 @tool
-def hotel_list(cityCode: str, radius: int, radiusUnit: str, amenities: list, ratings: list, budget: float = None, max_hotels: int = 5) -> str:
+def hotel_list(cityCode: str, ratings: list, max_hotels: int = 5) -> str:
     """
     Search for hotels in a given city within a budget if applicable.
     
     Args:
         cityCode (str): The IATA city code.
-        radius (int): Search radius.
-        radiusUnit (str): Unit for radius (e.g., 'KM', 'MI').
-        amenities (list): List of desired amenities.
         ratings (list): List of desired hotel ratings.
-        budget (float, optional): Maximum budget for hotel stay.
         max_hotels (int, optional): Maximum number of hotels to return default is 5.
     
     """
@@ -114,9 +109,6 @@ def hotel_list(cityCode: str, radius: int, radiusUnit: str, amenities: list, rat
     try:
         response = amadeus.reference_data.locations.hotels.by_city.get(
             cityCode = cityCode,
-            radius = radius,
-            radiusUnit = radiusUnit,
-            amenities = amenities,
             ratings = ratings
         )
 
@@ -130,7 +122,7 @@ def hotel_list(cityCode: str, radius: int, radiusUnit: str, amenities: list, rat
                 "name": hotel.get("name"),
                 "address": hotel.get("address", {}).get("lines", []),
                 "rating": hotel.get("rating"),
-                "amenities": hotel.get("amenities", []),
+                "geoCode": hotel.get("geoCode"),
             }
             simplified_hotels.append(hotel_info)
 
