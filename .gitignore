@@ -1,3 +1,4 @@
+frontend/.env
 backend/.env
 ai-agent/.env
 ai-agent/venv/

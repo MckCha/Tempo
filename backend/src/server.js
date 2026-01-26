@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 import userRoutes from "./routes/user.route.js";
 import conversationRoutes from "./routes/conversation.route.js";
@@ -13,6 +14,12 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Enable CORS for frontend
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true
+}));
 
 app.use(express.json());
 
